@@ -3,14 +3,27 @@
  */
 package org.example;
 
-import com.mmontilla.reactive.http.RxHttpServer;
+import com.mmontilla.parser.yaml.YamlFileParser;
+import com.mmontilla.reactive.http.server.RxHttpServer;
+
+import java.io.InputStream;
+import java.util.Map;
 
 public class App {
-    public String getGreeting() {
-        return "Hello World!";
+    public App() {
+
     }
 
     public static void main(String[] args) {
-        System.out.println(RxHttpServer.getReactiveServer());
+        App app = new App();
+        InputStream serverPropertiesIS = app.readServerProperties();
+        System.out.println("serverProperties = " + serverPropertiesIS);
+        Map serverProperties = YamlFileParser.loadYaml(serverPropertiesIS);
+        System.out.println("serverProperties = " + serverProperties);
+        RxHttpServer.init(serverProperties);
+    }
+
+    private InputStream readServerProperties() {
+        return this.getClass().getClassLoader().getResourceAsStream("reactive-http-server/server-configuration.yaml");
     }
 }

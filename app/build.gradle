@@ -20,6 +20,7 @@ dependencies {
     // This dependency is used by the application.
     implementation libs.guava
     implementation project(path: ':http')
+    implementation project(path: ':parser')
 }
 
 testing {

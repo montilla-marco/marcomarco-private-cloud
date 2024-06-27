@@ -17,8 +17,9 @@ repositories {
 }
 
 dependencies {
-    // This dependency is used by the application.
-    implementation libs.guava
+    implementation 'io.projectreactor:reactor-core:3.5.0'
+
+
     implementation project(path: ':http')
     implementation project(path: ':parser')
 }

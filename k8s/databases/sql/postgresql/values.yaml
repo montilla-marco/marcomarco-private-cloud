@@ -1,0 +1,14 @@
+global:
+  postgresql:
+    auth:
+      postgresPassword: "gladiator"
+      username: "antares"
+      password: "antares"
+  storageClass: "local-storage"
+primary:
+  persistence:
+    enabled: true
+    existingClaim: "postgresql-pvc"
+    storageClass: "local-storage"
+volumePermissions:
+  enabled: true

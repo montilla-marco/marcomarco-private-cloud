@@ -1,24 +1,49 @@
 #!/usr/bin/env bash
 
+# Definir colores para la salida de terminal
+BLUE="\033[1;34m"
+GREEN="\033[1;32m"
+NC="\033[0m"
+
+echo -e "${BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀${NC}"
+echo -e "${BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿${NC}"
+echo -e "${BLUE}⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⠛⠛⠛${NC}"
+echo -e "${BLUE}⠀⠀⠀⠀⠀⠀⢰⣶⣶⣶⠀⣶⣶⣶⣶⠀⢰⣶⣶⣶${NC}"
+echo -e "${BLUE}⠀⠀⠀⠀⠀⠀⢸⣿⣿⣿⠀⣿⣿⣿⣿⠀⢸⣿⣿⣿${NC}"
+echo -e "${BLUE}⠀⢠⣤⣤⣤⠀⢠⣤⣤⣤⠀⣤⣤⣤⣤⠀⢠⣤⣤⣤⠀⣰⣿⣿⣦.${NC}"
+echo -e "${BLUE}⠀⢸⣿⣿⣿⠀⢸⣿⣿⣿⠀⣿⣿⣿⣿⠀⢸⣿⣿⣿⠀⣿⣿⠹⣿⣷⣀${NC}"
+echo -e "${BLUE}⠀⠘⠛⠛⠛⠀⠘⠛⠛⠛⠀⠛⠛⠛⠛⠀⠘⠛⠛⠛⢀⣿⣿⡀⠙⠿⠿⣿⣶⣆${NC}"
+echo -e "${BLUE}⣴⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣶⣿⣿⣿⠟⢁⣤⣴⣶⣾⡿⠋${NC}"
+echo -e "${BLUE}⣿⣿⣿⣛⣛⣛⣛⣿⣟⣛⣛⣻⣿⣟⣛⣛⣻⣿⣟⣋⣉⣠⣤⣾⣿⣟⣻⣍${NC}"
+echo -e "${BLUE}⢹⣿⣿⣀⣀⣀⣀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⣾⣿⣿⠋${NC}"
+echo -e "${BLUE}⠈⢻⣿⣿⣿⡿⠿⠿⠿⠛⠉⠀⠀⠀⠀⠀⢀⣠⣴⣿⣿⣿⠟⠁${NC}"
+echo -e "${BLUE}⠀⠀⠙⢿⣿⣿⣶⣦⣤⣤⣤⣤⣤⣴⣶⣿⣿⣿⣿⠟⠋⠁${NC}"
+echo -e "${BLUE}⠀⠀⠀⠀⠈⠙⠛⠛⠿⠿⠿⠿⠿⠛⠛⠛⠉⠁${NC}"
+
+# Actualizar los paquetes del sistema
+echo -e "${BLUE}Updating package manager of ubuntu system.....${NC}"
+sudo apt-get update
+
+# Instalar containerd
+echo -e "${BLUE}Installing container runtime containerd...${NC}"
 sudo apt-get install -y containerd
+
+# Crear directorio de configuración de containerd si no existe
+echo -e "${BLUE}Creating ccontainerd onfiguration  directory if not exists..${NC}"
 sudo mkdir -p /etc/containerd
-containerd config default | sed 's/SystemdCgroup = false/SystemdCgroup = true/' | sudo tee /etc/containerd/config.toml
+
+# Generar configuración por defecto y modificar SystemdCgroup a true
+echo -e "${BLUE}Configurando containerd para usar SystemdCgroup...${NC}"
+containerd config default | sudo tee /etc/containerd/config.toml > /dev/null
+sudo sed -i 's/SystemdCgroup = false/SystemdCgroup = true/' /etc/containerd/config.toml
+sudo sed -i 's/sandbox_image = "registry.k8s.io\/pause:3.8"/sandbox_image = "registry.k8s.io\/pause:3.9"/' /etc/containerd/config.toml
+
+# Reiniciar el servicio de containerd
+echo -e "${BLUE}Reiniciando el servicio de containerd...${NC}"
 sudo systemctl restart containerd
 
-KUBE_LATEST=$(curl -L -s https://dl.k8s.io/release/stable.txt | awk 'BEGIN { FS="." } { printf "%s.%s", $1, $2 }')
+# Verificar el estado de containerd
+echo -e "${BLUE}Verificando el estado de containerd...${NC}"
+sudo systemctl status containerd --no-pager
 
-sudo mkdir -p /etc/apt/keyrings
-curl -fsSL https://pkgs.k8s.io/core:/stable:/${KUBE_LATEST}/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
-echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/${KUBE_LATEST}/deb/ /" | sudo tee /etc/apt/sources.list.d/kubernetes.list
-
-sudo apt-get update
-sudo apt-get install -y kubelet kubeadm kubectl
-sudo apt-mark hold kubelet kubeadm kubectl
-
-sudo crictl config \
-    --set runtime-endpoint=unix:///run/containerd/containerd.sock \
-    --set image-endpoint=unix:///run/containerd/containerd.sock
-
-cat <<EOF | sudo tee /etc/default/kubelet
-KUBELET_EXTRA_ARGS='--node-ip ${PRIMARY_IP}'
-EOF
+echo -e "${GREEN}Instalación y configuración de containerd completada.${NC}"

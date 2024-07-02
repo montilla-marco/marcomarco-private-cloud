@@ -1,23 +1,51 @@
 #!/usr/bin/env bash
 
-# Step 2 - Set up Operating System Prerequisites
+# Definir colores para la salida de terminal
+YELLOW="\033[1;33m"
+NC="\033[0m"
 
-# Load required kernel modules
+# Mostrar un mensaje decorativo
+#echo -e "${YELLOW}   _${NC}"
+#echo -e "${YELLOW} ('v')${NC}"
+#echo -e "${YELLOW}//-=-\\${NC}"
+#echo -e "${YELLOW}(\_=_/)${NC}"
+#echo -e "${YELLOW} ^^ ^^${NC}"
+echo -e "${YELLOW}.........${NC}"
+echo -e "${YELLOW}...............${NC}"
+echo -e "${YELLOW}........................${NC}"
+echo -e "${YELLOW}....................................${NC}"
+echo -e "${YELLOW}................................................${NC}"
+
+# Cargar los módulos del kernel necesarios
+echo -e "${YELLOW}Cargando módulos del kernel necesarios...${NC}"
 sudo modprobe overlay
 sudo modprobe br_netfilter
 
-# Persist modules between restarts
+# Hacer que los módulos se carguen automáticamente al inicio
+echo -e "${YELLOW}Haciendo persistentes los módulos del kernel...${NC}"
 cat <<EOF | sudo tee /etc/modules-load.d/k8s.conf
 overlay
 br_netfilter
 EOF
 
-# Set required networking parameters
+# Configurar los parámetros de red necesarios para Kubernetes
+echo -e "${YELLOW}Configurando parámetros de red...${NC}"
 cat <<EOF | sudo tee /etc/sysctl.d/k8s.conf
 net.bridge.bridge-nf-call-iptables  = 1
 net.bridge.bridge-nf-call-ip6tables = 1
 net.ipv4.ip_forward                 = 1
 EOF
 
-# Apply sysctl params without reboot
+# Aplicar los parámetros de red sin necesidad de reiniciar
+echo -e "${YELLOW}Aplicando parámetros de red...${NC}"
 sudo sysctl --system
+
+echo -e "${YELLOW}Configuración de los requisitos previos del sistema operativo completada.${NC}"
+
+#cat <<EOF | kubectl apply -f -
+#apiVersion: v1
+#kind: ServiceAccount
+#metadata:
+#  name: dashboard-admin
+#  namespace: kubernetes-dashboard
+#EOF

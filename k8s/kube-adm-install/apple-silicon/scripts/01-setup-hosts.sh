@@ -20,3 +20,5 @@ sudo systemctl restart sshd
 
 # Set password for ubuntu user (it's something random by default)
 echo 'ubuntu:ubuntu' | sudo chpasswd
+
+clear

@@ -41,11 +41,3 @@ echo -e "${YELLOW}Aplicando parámetros de red...${NC}"
 sudo sysctl --system
 
 echo -e "${YELLOW}Configuración de los requisitos previos del sistema operativo completada.${NC}"
-
-#cat <<EOF | kubectl apply -f -
-#apiVersion: v1
-#kind: ServiceAccount
-#metadata:
-#  name: dashboard-admin
-#  namespace: kubernetes-dashboard
-#EOF

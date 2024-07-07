@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+
 echo "First Step: Create Name Space for postgresql-16"
 kubectl create namespace postgresql-16
 

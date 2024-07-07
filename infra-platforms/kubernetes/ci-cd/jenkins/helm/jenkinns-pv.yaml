@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: jenkins-pv.yaml
+  namespace: jenkins
+spec:
+  storageClassName: jenkins-pv.yaml
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 30Gi
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /home/ubuntu/data
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: jenkins-pv.yaml
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer

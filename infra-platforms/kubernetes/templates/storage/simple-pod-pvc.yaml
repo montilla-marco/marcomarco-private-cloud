@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: micro-frontend-xxx-pod
+spec:
+  containers:
+    - name: micro-frontend-xxx
+      image: "micro-frontend-xxx:version"
+      volumeMounts:
+        - mountPath: "/var/www/html"
+          name: micro-frontend-xxx-pod-vol
+  volumes:
+    - name: micro-frontend-xxx-pod-vol
+      persistentVolumeClaim:
+        claimName: micro-frontend-xxx-pod-pvc

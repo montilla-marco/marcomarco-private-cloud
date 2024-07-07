@@ -1,0 +1,37 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: xxx-multimap
+data:
+  name: "Marco"
+  age: 33
+  test.conf: |
+    env = plex-test
+    endpoint = 0.0.0.0:31001
+    char = utf8
+    vault = PLEX/test
+    log-size = 512M
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    sample: configmaps
+  name: envpod
+spec:
+  containers:
+    - name: envpod-ctr
+      image: busybox
+      command: ["sleep"]
+      args: ["infinity"]
+      env:
+        - name: NAME
+          valueFrom:
+            configMapKeyRef:
+              name: xxx-multimap
+              key: name
+        - name: LASTNAME
+          valueFrom:
+            configMapKeyRef:
+              name: xxx-multimap
+              key: age

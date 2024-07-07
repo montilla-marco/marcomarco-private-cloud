@@ -21,6 +21,8 @@ BUILD_MODE=${3:-BRIDGE}
 
 MASTER_MEMORY="2G"
 WORKERS_MEMORY="8G"
+LOCAL_VOLUMES_PATH="/kubernetes/share/volumes/data"
+NODES_VOLUMES_PATH="/home/ubuntu/data"
 
 # Colores para la salida de terminal
 RED="\033[1;31m"
@@ -37,11 +39,11 @@ fi
 
 if [ $# -lt 3 ]; then
     BUILD_MODE="BRIDGE"
-    echo "The networking model will be by default $BUILD_MODE"
+    echo -e "${YELLOW}The networking model will be by default $BUILD_MODE${NC}"
 fi
 
 if [ $NUM_WORKER_NODES -lt 1 ]; then
-    echo -e "${RED}Thje number of worker nodes has to be at least 1.${NC}"
+    echo -e "${RED}The number of worker nodes has to be at least 1.${NC}"
     exit 1
 fi
 
@@ -60,15 +62,19 @@ if ! command_exists jq; then
 fi
 
 # Verificar la disponibilidad de memoria
+echo -e "${GREEN}Checking memory availability${NC}"
 MEM_GB=$(( $(sysctl hw.memsize | cut -d ' ' -f 2) / 1073741824 ))
-
-if [ $MEM_GB -t 18 ]; then
+if [ $MEM_GB -lt 18 ]; then
     echo -e "${RED}System RAM is ${MEM_GB}GB. This is insufficient to deploy a working cluster.${NC}"
     exit 1
 fi
 
+# Directory to store volume data on host machine
+MKDIR_RESULT=$(mkdir -p "$HOME$LOCAL_VOLUMES_PATH")
+echo -e "${BLUE}Directory for host sharing volume data created at:$HOME$LOCAL_VOLUMES_PATH${NC}"
+
 workers=$(for n in $(seq 1 $NUM_WORKER_NODES); do echo -n "k8s-worker-node$n "; done)
-echo "We will proceed to create k8s-control-plane with these nodes: ${workers}"
+echo -e "${GREEN}We will proceed to create k8s-control-plane with these nodes: ${workers}${NC}"
 
 # Determinar interfaz para bridge
 interface=""
@@ -77,22 +83,22 @@ bridge_arg="--bridged"
 for iface in $(multipass networks --format json | jq -r '.list[] | .name'); do
     if netstat -rn -f inet | grep "^default.*${iface}" > /dev/null; then
         interface=$iface
-        echo "The platform will use the following network interface: $iface"
+        echo -e "${YELLOW}The platform will use the following network interface: $iface${NC}"
         break
     fi
 done
 
 if [ "$(multipass get local.bridged-network)" = "<empty>" ]; then
-    echo -e "${BLUE}Configuring bridge network...${NC}"
+    echo -e "${GREEN}Configuring bridge network...${NC}"
 
     if [ -z "${interface}" ]; then
-        echo -e "${YELLOW}No suitable interface detected to use as bridge"
+        echo -e "${RED}No suitable interface detected to use as bridge"
         echo "Falling back to NAT installation"
         echo -e "You will not be able to use your browser to connect to NodePort services.${NC}"
         BUILD_MODE="NAT"
         bridge_arg=""
     else
-        echo -e "${GREEN}Configuring bridge to interface '$(multipass networks | grep ${interface})'${NC}"
+        echo -e "${YELLOW}Configuring bridge to interface '$(multipass networks | grep ${interface})'${NC}"
         multipass set local.bridged-network=${interface}
     fi
 fi
@@ -105,6 +111,8 @@ if multipass list --format json | jq -r '.list[].name' | grep -E '(k8s-control-p
     [ "$ans" != 'y' ] && exit 1
 fi
 
+
+echo -e "${GREEN}Setting hostnames${NC}"
 for node in k8s-control-plane $workers; do
     if multipass list --format json | jq -r '.list[].name' | grep "$node"; then
         echo -e "${YELLOW}Deleting $node${NC}"
@@ -112,13 +120,13 @@ for node in k8s-control-plane $workers; do
         multipass purge
     fi
 
-    echo -e "${BLUE}Launching ${node}${NC}"
+    echo -e "${GREEN}Launching ${node}${NC}"
     if [ "$node" = "k8s-control-plane" ]; then
-        if ! multipass launch $bridge_arg --disk 20G --memory $MASTER_MEMORY --cpus 4 --name $node jammy; then
+        if ! multipass launch $bridge_arg --mount "$HOME$LOCAL_VOLUMES_PATH:$NODES_VOLUMES_PATH" --disk 20G --memory $MASTER_MEMORY --cpus 4 --name $node jammy; then
             sleep 1
         fi
     else
-        if ! multipass launch $bridge_arg --disk 40G --memory $WORKERS_MEMORY --cpus 8 --name $node jammy; then
+        if ! multipass launch $bridge_arg --mount "$HOME$LOCAL_VOLUMES_PATH:$NODES_VOLUMES_PATH" --disk 40G --memory $WORKERS_MEMORY --cpus 8 --name $node jammy; then
             sleep 1
         fi
     fi
@@ -127,11 +135,11 @@ for node in k8s-control-plane $workers; do
         echo -e "${RED}$node failed to start!${NC}"
         exit 1
     fi
-    echo -e "${GREEN}$node booted!${NC}"
+    echo -e "${BLUE}$node booted!${NC}"
 done
 
 # Create hostfile entries
-echo -e "${BLUE}Setting hostnames${NC}"
+echo -e "${GREEN}Setting hostnames${NC}"
 hostentries=/tmp/hostentries
 set -x
 network=$(netstat -rn -f inet | grep "^default.*${interface}" | awk '{print $2}' | awk 'BEGIN { FS="." } { printf "%s.%s.%s", $1, $2, $3 }')
@@ -148,7 +156,7 @@ do
     echo "$ip $node" >> $hostentries
 done
 
-echo -e "${BLUE}configuring the following ip address for each machine ${NC}"
+echo -e "${GREEN}configuring the following ip address for each machine ${NC}"
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )/scripts
 for node in k8s-control-plane $workers
 do
@@ -156,12 +164,12 @@ do
     multipass transfer $SCRIPT_DIR/01-setup-hosts.sh $node:/tmp/
     multipass exec $node -- /tmp/01-setup-hosts.sh $BUILD_MODE $network
 done
-echo -e "${GREEN}Done!${NC}"
+echo -e "${BLUE}ip addresses configured!!!${NC}"
 
 if [ "$ISAUTO" = "-auto" ]
 then
     # Set up hosts
-    echo -e "${YELLOW}Setting up common components${NC}"
+    echo -e "${GREEN}Setting up common components${NC}"
 
     join_command=/tmp/join-command.sh
 
@@ -176,23 +184,24 @@ then
         done
     done
 
-    echo -e "${YELLOW}Done!${NC}"
+    echo -e "${BLUE}Common components ready in all nodes!!!${NC}"
 
     #Configure control plane
-    echo -e "${BLUE}Setting up control plane${NC}"
+    echo -e "${GREEN}Setting up control plane${NC}"
     multipass exec k8s-control-plane /tmp/05-deploy-controlplane.sh
     multipass transfer k8s-control-plane:/tmp/join-command.sh $join_command
-    echo -e "${YELLOW}Done!${NC}"
+    echo -e "${BLUE}Control plane started!!!${NC}"
 
     # Configure workers
-    for n in $workers
+    for worker in $workers
     do
-        echo -e "${BLUE}Setting up the worker with join command${n}${NC}"
-        multipass transfer $join_command $n:/tmp
-        multipass exec $n -- sudo $join_command
-        echo -e "${YELLOW}Done!${NC}"
+        echo -e "${GREEN}Joining up the worker $worker to control plane${NC}"
+        multipass transfer $join_command $worker:/tmp
+        multipass exec $worker -- sudo $join_command
+        echo -e "${BLUE}$worker joined to the cluster${NC}"
     done
 fi
 
 echo -e "${GREEN}Kubernetes cluster setup is complete!${NC}"
+multipass exec k8s-control-plane -- kubectl get nodes
 echo -e "${BLUE}Happy k8s hacking!!!"

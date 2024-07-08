@@ -8,7 +8,9 @@
 - Gradle: see documentetion [ Gradle release 8.8 Installation with sdkman](https://sdkman.io/sdks#:~:text=sdk%20install%20grace-,Gradle,-(8.8))
 - IntelliJ CE or Whatever be your favorite IDE.
 - Canonical Multipass: [Ubuntu VMs on demand](https://multipass.run/).
+- Linux wget Command: [Installation guide](https://www.jcchouinard.com/wget/)
 - Linux jq Command: [Installation guide](https://github.com/jqlang/jq/wiki/Installation)
+- Linux yq Command: [Installation guide](https://mikefarah.gitbook.io/yq#install)
 - Kubectl: [Command-line tool](https://kubernetes.io/docs/tasks/tools/)
 - Helm: [Helm CLI](https://helm.sh/docs/intro/install/)
 

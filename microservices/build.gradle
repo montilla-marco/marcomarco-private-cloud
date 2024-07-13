@@ -1,0 +1,53 @@
+class AutomationPlugin implements Plugin<Project> {
+
+    void apply(Project project) {
+        // Define tasks or configurations here
+        project.task('automateWeb') {
+            doFirst {
+                println 'Reading automation properties for build project'
+                def propertiesFile = project.file('automation.properties')
+                def settings = new Properties()
+                settings.load(new FileInputStream(propertiesFile))
+
+                def params = [
+                        dependencies: settings.getProperty('dependencies', 'web'),
+                        bootVersion: settings.getProperty('bootVersion', '3.3.1'),
+                        language: settings.getProperty('language', 'java'),
+                        javaVersion: settings.getProperty('javaVersion', '21'),
+                        type: settings.getProperty('type', 'gradle-project'),
+                        groupId: settings.getProperty('groupId', 'org.marcomarco.blog'),
+                        artifactId: settings.getProperty('artifactId', 'microservice'),
+                        name: settings.getProperty('name', 'blocking'),
+                        baseDir: settings.getProperty('name', 'blocking'),
+                        packageName: settings.getProperty('packageName', 'org.marcomarco.blog.microservice'),
+                        description: settings.getProperty('description', 'Spring Boot based in block thread server'),
+                        packaging: settings.getProperty('packaging', 'jar'),
+                ]
+
+                def baseUrl = 'https://start.spring.io'
+                def url = "${baseUrl}/starter.zip?" + params.collect { k, v -> "${k}=${v}" }.join('&')
+
+                // Download the project zip file
+                def zipFile = new File('./microservices/', params.name + '.zip')
+
+                // Download the project zip file
+                new URL(url).withInputStream { inputStream ->
+                    zipFile.withOutputStream { outputStream ->
+                        outputStream << inputStream
+                    }
+                }
+                println params.name + '.zip downloaded from spring'
+            }
+            doLast {
+                println 'Hello, Script Automation Plugin!'
+
+            }
+        }
+    }
+}
+
+apply plugin: AutomationPlugin
+
+tasks.named('automateWeb') {
+
+}

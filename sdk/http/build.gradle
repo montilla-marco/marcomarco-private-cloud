@@ -1,0 +1,35 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    // Use Maven Central for resolving dependencies.
+    mavenCentral()
+}
+
+dependencies {
+
+    implementation 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+    implementation 'org.apache.logging.log4j:log4j-core:2.23.1'
+
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+println("BUILD SCRIPT: This is executed during the configuration phase")
+
+tasks.register('task3') {
+    println('REGISTER TASK3: This is executed during the configuration phase')
+}
+
+tasks.named('task3') {
+    println('NAMED TASK3: This is executed during the configuration phase')
+    doFirst {
+        println('NAMED TASK3 - doFirst: This is executed during the execution phase')
+    }
+    doLast {
+        println('NAMED TASK3 - doLast: This is executed during the execution phase')
+    }
+}

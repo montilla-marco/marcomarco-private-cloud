@@ -1,18 +1,26 @@
 #!/usr/bin/env bash
 
-echo "First Step: Create Name Space for postgresql-16"
-kubectl create namespace postgresql-16
+YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
+NC="\033[0m" # Sin color
 
-kubectl config set-context --current --namespace=postgresql-16
+multipass exec k8s-worker-node1 -- sudo mkdir /mnt/k8s-worker-node1/postgresql
+multipass exec k8s-worker-node1 -- sudo chmod 777 /mnt/k8s-worker-node1/postgresql
 
-#kubectl apply -f pv-4gi.yaml --namespace postgresql-16
+echo -e "${YELLOW}First Step: Create Name Space for postgresql16-ns${NC}"
+kubectl apply -f postgresql-ns.yaml
 
-echo "Second Step: Install Custom Persistent Volume Claim reducing the default to half"
-kubectl apply -f pvc.yaml --namespace postgresql-16
+#kubectl config set-context --current --namespace=postgresql16-ns
+#kubectl apply -f pv-4gi.yaml --namespace postgresql16-ns
 
-echo "Third Step: Install Helm Chart Overriding persistence.existingClaim value"
-helm upgrade --install postgresql --version 15.5.11 --values values.yaml  bitnami/postgresql
+echo -e "${YELLOW}Second Step: Install Local Persistent Volume and Custom Persistent Volume Claim reducing the default to half${NC}"
+kubectl apply -f postgresql-pv.yaml
 
-kubectl port-forward --namespace postgresql-16 svc/postgresql 5432:5432 &
+kubectl apply -f postgresql-pvc.yaml
+
+echo -e "${YELLOW}Third Step: Install Helm Chart Overriding persistence.existingClaim value${NC}"
+helm upgrade --install postgresql --version 15.5.15 --values values.yaml  bitnami/postgresql --namespace postgresql16-ns
+
+#kubectl port-forward --namespace postgresql16-ns svc/postgresql 5432:5432 &
 
 

@@ -1,0 +1,14 @@
+auth:
+  adminUser: "admin"
+  adminPassword: "gladiator"
+postgresql:
+  enabled: false
+externalDatabase:
+  host: ""
+  port: 5432
+  user: "antares"
+  database: bitnami_keycloak
+  password: "antares"
+extraEnvVars:
+  - name: KEYCLOAK_LOG_LEVEL
+    value: DEBUG

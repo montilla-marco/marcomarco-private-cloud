@@ -16,7 +16,7 @@ anc Mac, please feel free to add some additions (Linux)  to it.
 ## Install Platform
 - Install [Getting Started](./docs/starting.md)
 
-## Configure K8S and K3S to use host kubectl command
+## Configure K8S or K3S to use host kubectl command
 - Configure [kubectl](./docs/kubectl-config.md))
 
 ## Configure base default storage class
@@ -27,11 +27,23 @@ A StorageClass provides a way for administrators to describe the classes of stor
     $ cd infra-platforms/kubernetes/
     $ ./create-default-local-storage-class.sh
 
+## Install Istio Service Mesh (Optional you can install a ingress controller)
+- Install [Istio](./docs/istio.md)
+
+## Install PostgreSQL
+- Install [PostgreSQL](./docs/postgresql.md)
+
+## Install Keycloack server IAM
+- Install [Keycloack](./docs/keycloack.md)
+
+## Install Kubernetes Ingress Controller (If you installed Istio, skip this step)
+**NOTE:** if you plan to run a service mesh, you may not need Ingress.
+- Install [Ingress](./docs/ingress.md)
 
 ## Install CI/CD
 - Install [Getting Started](./docs/ci-cd.md)
 
+
 # NAMING OF RESOURCES
 name-object Ej jenkins-ns
 
-[brew install iproute2mac]route

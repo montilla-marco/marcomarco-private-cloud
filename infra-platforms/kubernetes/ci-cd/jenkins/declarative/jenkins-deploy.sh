@@ -5,8 +5,8 @@ NC="\033[0m"
 
 # see: https://github.com/scriptcamp/kubernetes-jenkins
 
-multipass exec k8s-worker-node1 -- sudo mkdir /mnt/jenkins
-multipass exec k8s-worker-node1 -- sudo chmod 777 /mnt/jenkins
+multipass exec k8s-worker-node1 -- sudo mkdir /mnt/k8s-worker-node1/jenkins
+multipass exec k8s-worker-node1 -- sudo chmod 777 /mnt/k8s-worker-node1/jenkins
 
 #Create a Namespace with name jenkins-ns
 kubectl apply -f jenkins-ns.yaml

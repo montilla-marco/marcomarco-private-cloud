@@ -10,7 +10,7 @@ command_exists() {
 
 # Función para mostrar uso del script
 usage() {
-    echo "Usage: $0 <number_of_nodes> [-auto] [bridge | nat]"
+    echo -e "${GREEN}Usage: $0 <number_of_nodes> [-auto] [-bridge | -nat] -volume-sharing=true|false${NC}"
     exit 1
 }
 
@@ -21,14 +21,16 @@ BUILD_MODE=${3:-BRIDGE}
 
 MASTER_MEMORY="2G"
 WORKERS_MEMORY="8G"
-LOCAL_VOLUMES_PATH="/kubernetes/share/volumes/data"
-NODES_VOLUMES_PATH="/home/ubuntu/data"
+VOLUME_MODE_CONTROL_PLANE=""
+VOLUME_MODE_WORKER_NODE="--mount "
+NODES_VOLUMES_PATH="/mnt"
 
 # Colores para la salida de terminal
 RED="\033[1;31m"
 YELLOW="\033[1;33m"
 GREEN="\033[1;32m"
 BLUE="\033[1;34m"
+PURPLE="\[\033[1;35m\]"
 NC="\033[0m"
 
 
@@ -45,6 +47,53 @@ fi
 if [ $NUM_WORKER_NODES -lt 1 ]; then
     echo -e "${RED}The number of worker nodes has to be at least 1.${NC}"
     exit 1
+fi
+
+# Verificar volumes
+if [ "$#" -lt 4 ]; then
+  echo -e "${RED}Error: please introduce if the volume sharing is HOST-VMGUEST-POD or not${NC}"
+  usage
+fi
+
+# Capturar el cuarto parámetro
+VOLUME_SHARING_PARAM=$4
+# Verificar que el cuarto parámetro sigue el formato esperado
+if [[ ! "$VOLUME_SHARING_PARAM" =~ ^-volume-sharing=(true|false)$ ]]; then
+  echo -e "${RED}Error: the value for param -volume-sharing must be -volume-sharing=true or -volume-sharing=false${NC}"
+  usage
+fi
+
+# Extraer el valor del cuarto parámetro
+VOLUME_SHARING="${VOLUME_SHARING_PARAM#*=}"
+if [ "$VOLUME_SHARING" == "true" ]; then
+    echo -e "${YELLOW}Volume sharing mode enabled.${NC}"
+    LOCAL_VOLUMES_PATH="$HOME/mnt/"
+    echo -e "${YELLOW}By default, the directories will be created at $LOCAL_VOLUMES_PATH directory.${NC}"
+
+    # Crear directorios para el nodo de control
+    DIR_NAME="${LOCAL_VOLUMES_PATH}k8s-control-plane"
+    if [ ! -d "$DIR_NAME" ]; then
+        mkdir -p "$DIR_NAME"
+        chmod 777 "$DIR_NAME"
+        echo -e "${BLUE}Directory $DIR_NAME created.${NC}"
+    else
+        echo -e "${BLUE}Directory $DIR_NAME already exists.${NC}"
+    fi
+    VOLUME_MODE_CONTROL_PLANE=" --mount $DIR_NAME:/mnt/k8s-control-plane"
+
+    # Crear directorios para los nodos de trabajo
+    for i in $(seq 1 $NUM_WORKER_NODES); do
+        DIR_NAME="${LOCAL_VOLUMES_PATH}k8s-worker-node$i"
+        if [ ! -d "$DIR_NAME" ]; then
+            mkdir -p "$DIR_NAME"
+            chmod 777 "$DIR_NAME"
+            echo -e "${BLUE}Directory $DIR_NAME created.${NC}"
+        else
+            echo -e "${BLUE}Directory $DIR_NAME already exists.${NC}"
+        fi
+    done
+else
+    echo -e "${PURPLE}Volume sharing is disabled there is going to be a data lost when shutdown the platform${NC}"
 fi
 
 # Verificar si Multipass está instalado
@@ -122,11 +171,15 @@ for node in k8s-control-plane $workers; do
 
     echo -e "${GREEN}Launching ${node}${NC}"
     if [ "$node" = "k8s-control-plane" ]; then
-        if ! multipass launch $bridge_arg --mount "$HOME$LOCAL_VOLUMES_PATH:$NODES_VOLUMES_PATH" --disk 20G --memory $MASTER_MEMORY --cpus 4 --name $node jammy; then
+        if ! multipass launch $bridge_arg$VOLUME_MODE_CONTROL_PLANE --disk 20G --memory $MASTER_MEMORY --cpus 4 --name $node jammy; then
             sleep 1
         fi
     else
-        if ! multipass launch $bridge_arg --mount "$HOME$LOCAL_VOLUMES_PATH:$NODES_VOLUMES_PATH" --disk 40G --memory $WORKERS_MEMORY --cpus 8 --name $node jammy; then
+        VOLUME_MODE_WORKER=""
+        if [ "$VOLUME_SHARING" == "true" ]; then
+           VOLUME_MODE_WORKERS=" --mount ${LOCAL_VOLUMES_PATH}$node:/mnt/$node"
+        fi
+        if ! multipass launch $bridge_arg $VOLUME_MODE_WORKERS --disk 40G --memory $WORKERS_MEMORY --cpus 8 --name $node jammy; then
             sleep 1
         fi
     fi
@@ -193,11 +246,10 @@ then
     echo -e "${BLUE}Control plane started!!!${NC}"
 
     # Configure workers
-    for worker in $workers
-    do
-        echo -e "${GREEN}Joining up the worker $worker to control plane${NC}"
-        multipass transfer $join_command $worker:/tmp
-        multipass exec $worker -- sudo $join_command
+    for worker in $workers; do
+        echo -e "${GREEN}Joining worker $worker to the control plane...${NC}"
+        multipass transfer "$join_command $worker:/tmp"
+        multipass exec "$worker -- sudo $join_command"
         echo -e "${BLUE}$worker joined to the cluster${NC}"
     done
 fi

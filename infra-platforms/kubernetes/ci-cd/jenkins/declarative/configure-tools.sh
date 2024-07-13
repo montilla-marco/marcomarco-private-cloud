@@ -3,6 +3,7 @@
 
 # Definir colores para la salida de terminal
 YELLOW="\033[1;33m"
+BLUE="\033[1;34m"
 NC="\033[0m" # Sin color
 
 # Obtener el nombre del pod de Jenkins
@@ -29,6 +30,23 @@ import hudson.tasks.*
 
 def instance = Jenkins.getInstance()
 
+// Configurar el Realm de seguridad para que sea HudsonPrivateSecurityRealm
+def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+hudsonRealm.createAccount("admin", "gladiator")
+instance.setSecurityRealm(hudsonRealm)
+
+// Configurar la estrategia de autorización para dar control total al usuario administrador
+def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+strategy.setAllowAnonymousRead(false)
+instance.setAuthorizationStrategy(strategy)
+
+// Guardar los cambios
+instance.save()
+
+def stateFile = new File(Jenkins.instance.getRootDir(), "jenkins.install.InstallUtil.lastExecVersion")
+stateFile.text = Jenkins.VERSION
+
+
 // Configure JDK
 def jdkDesc = instance.getDescriptorByType(hudson.model.JDK.DescriptorImpl)
 def installations = []
@@ -39,13 +57,13 @@ jdkDesc.setInstallations(installations as JDK[])
 jdkDesc.save()
 
 // Configure Maven
-def mavenDesc = instance.getDescriptorByType(hudson.tasks.Maven.DescriptorImpl)
-def mavenInstallations = []
-def mavenHome = "/usr/share/maven"
-def maven = new Maven.MavenInstallation("Maven3", mavenHome, [])
-mavenInstallations += maven
-mavenDesc.setInstallations(mavenInstallations as Maven.MavenInstallation[])
-mavenDesc.save()
+// def mavenDesc = instance.getDescriptorByType(hudson.tasks.Maven.DescriptorImpl)
+// def mavenInstallations = []
+// def mavenHome = "/usr/share/maven"
+// def maven = new Maven.MavenInstallation("Maven3", mavenHome, [])
+// mavenInstallations += maven
+// mavenDesc.setInstallations(mavenInstallations as Maven.MavenInstallation[])
+// mavenDesc.save()
 
 instance.save()
 EOF
@@ -64,12 +82,7 @@ kubectl cp --namespace=jenkins-ns $FILE_NAME $JENKINS_POD:$FILE_NAME
 echo -e "${YELLOW}Run Groovy script${NC}"
 kubectl exec --namespace=jenkins-ns "pod/$JENKINS_POD" -- ls -al /tmp
 kubectl exec --namespace=jenkins-ns "pod/$JENKINS_POD" -- java -jar "/tmp/$CLI_JAR" -s $JENKINS_URL -auth $JENKINS_USER:$JENKINS_TOKEN groovy = < $FILE_NAME
-
-# Accede al contenedor de Jenkins
-POD_NAME=$(kubectl get pods --namespace jenkins -l "app.kubernetes.io/component=jenkins-controller" -o jsonpath="{.items[0].metadata.name}")
-
-# Crear el archivo para deshabilitar el wizard
-kubectl exec --namespace=jenkins-ns "pod/$JENKINS_POD" -- bash -c 'echo "2.0" > /var/jenkins_home/jenkins.install.UpgradeWizard.state'
+echo -e "${YELLOW}Groovy script done!!!${NC}"
 
 # Reiniciar el pod de Jenkins
 kubectl delete pod "pod/$JENKINS_POD" --namespace=jenkins-ns

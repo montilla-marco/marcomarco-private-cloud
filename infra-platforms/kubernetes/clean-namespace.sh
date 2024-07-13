@@ -15,9 +15,9 @@ for resource in $(kubectl api-resources --verbs=list --namespaced -o name | grep
 done
 
 # if have a persistent volume
-PV=$(kubectl get pv | grep "jenkins-ns" | awk '{print $1}')
+PV=$(kubectl get pv | grep "$NAMESPACE" | awk '{print $1}')
 if [[ -n "$PV" ]]; then
-    kubectl delete pv $PV -n ${NAMESPACE}
+    kubectl delete pv $PV
 fi
 
 #TODO delete users role and rolebinding

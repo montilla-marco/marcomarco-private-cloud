@@ -8,7 +8,7 @@ global:
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgresql-pvc"
+    existingClaim: "postgresql16-pvc"
     storageClass: "local-storage"
 volumePermissions:
   enabled: true

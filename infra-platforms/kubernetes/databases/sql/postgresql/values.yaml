@@ -2,13 +2,14 @@ global:
   postgresql:
     auth:
       postgresPassword: "gladiator"
-      username: "antares"
-      password: "antares"
+      username: "keycloak"
+      password: "secretes"
+    database: "keycloak"
   storageClass: "local-storage"
 primary:
   persistence:
     enabled: true
-    existingClaim: "postgresql16-pvc"
+    existingClaim: "postgresql-pvc"
     storageClass: "local-storage"
 volumePermissions:
   enabled: true

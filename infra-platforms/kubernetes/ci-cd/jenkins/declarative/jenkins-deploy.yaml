@@ -27,6 +27,9 @@ spec:
             requests:
               memory: "500Mi"
               cpu: "500m"
+          env:
+            - name: JAVA_OPTS
+              value: "-Dhudson.plugins.git.GitSCM.ALLOW_LOCAL_CHECKOUT=true"
           ports:
             - name: httpport
               containerPort: 8080
@@ -51,7 +54,14 @@ spec:
           volumeMounts:
             - name: jenkins-data
               mountPath: /var/jenkins_home
+            - name: src
+              mountPath: /usr/local/src
+              readOnly: true
+              recursiveReadOnly: Enabled
       volumes:
         - name: jenkins-data
           persistentVolumeClaim:
             claimName: jenkins-pv-claim
+        - name: src
+          hostPath:
+            path: /usr/local/src

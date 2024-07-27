@@ -16,7 +16,7 @@ done
 
 # if have a persistent volume
 PV=$(kubectl get pv | grep "$NAMESPACE" | awk '{print $1}')
-if [[ -n "$PV" ]]; then
+if [ -n "$PV" ]; then
     kubectl delete pv $PV
 fi
 

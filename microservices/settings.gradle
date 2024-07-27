@@ -5,4 +5,4 @@ plugins {
 rootProject.name = 'microservices'
 
 include('authentication')
-include('web-basic')
+include('ms-hello')

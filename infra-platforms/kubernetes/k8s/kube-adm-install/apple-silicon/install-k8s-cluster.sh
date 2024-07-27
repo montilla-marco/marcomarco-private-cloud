@@ -30,7 +30,7 @@ RED="\033[1;31m"
 YELLOW="\033[1;33m"
 GREEN="\033[1;32m"
 BLUE="\033[1;34m"
-PURPLE="\[\033[1;35m\]"
+PURPLE="\033[1;35m\]"
 NC="\033[0m"
 
 
@@ -67,7 +67,15 @@ fi
 VOLUME_SHARING="${VOLUME_SHARING_PARAM#*=}"
 if [ "$VOLUME_SHARING" == "true" ]; then
     echo -e "${YELLOW}Volume sharing mode enabled.${NC}"
+
+    # Directory to store volume data on host machine
+    MKDIR_RESULT=$(mkdir -p "$HOME$LOCAL_VOLUMES_PATH")
+    echo -e "${BLUE}Directory for host sharing volume data created at:$HOME$LOCAL_VOLUMES_PATH${NC}"
+
     LOCAL_VOLUMES_PATH="$HOME/mnt/"
+    rm -Rf $LOCAL_VOLUMES_PATH
+    mkdir $LOCAL_VOLUMES_PATH
+    chmod 777 "$LOCAL_VOLUMES_PATH"
     echo -e "${YELLOW}By default, the directories will be created at $LOCAL_VOLUMES_PATH directory.${NC}"
 
     # Crear directorios para el nodo de control
@@ -118,13 +126,9 @@ if [ $MEM_GB -lt 18 ]; then
     exit 1
 fi
 
-# Directory to store volume data on host machine
-MKDIR_RESULT=$(mkdir -p "$HOME$LOCAL_VOLUMES_PATH")
-echo -e "${BLUE}Directory for host sharing volume data created at:$HOME$LOCAL_VOLUMES_PATH${NC}"
 
 workers=$(for n in $(seq 1 $NUM_WORKER_NODES); do echo -n "k8s-worker-node$n "; done)
 echo -e "${GREEN}We will proceed to create k8s-control-plane with these nodes: ${workers}${NC}"
-
 # Determinar interfaz para bridge
 interface=""
 bridge_arg="--bridged"
@@ -175,7 +179,7 @@ for node in k8s-control-plane $workers; do
             sleep 1
         fi
     else
-        VOLUME_MODE_WORKER=""
+        VOLUME_MODE_WORKERS=""
         if [ "$VOLUME_SHARING" == "true" ]; then
            VOLUME_MODE_WORKERS=" --mount ${LOCAL_VOLUMES_PATH}$node:/mnt/$node"
         fi
@@ -246,10 +250,11 @@ then
     echo -e "${BLUE}Control plane started!!!${NC}"
 
     # Configure workers
-    for worker in $workers; do
-        echo -e "${GREEN}Joining worker $worker to the control plane...${NC}"
-        multipass transfer "$join_command $worker:/tmp"
-        multipass exec "$worker -- sudo $join_command"
+    for worker in $workers
+    do
+        echo -e "${GREEN}Joining up the worker $worker to control plane${NC}"
+        multipass transfer $join_command $worker:/tmp
+        multipass exec $worker -- sudo $join_command
         echo -e "${BLUE}$worker joined to the cluster${NC}"
     done
 fi

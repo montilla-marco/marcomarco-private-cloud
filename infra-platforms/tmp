@@ -1,0 +1,120 @@
+Para integrar la validación de tokens JWT utilizando Keycloak en una aplicación Spring Boot que siga los principios de hexagonal architecture y funcione con un flujo de OpenID Connect, aquí te explico los pasos necesarios:
+
+### Preparación del Entorno
+
+1. **Configuración de Keycloak**:
+   - Instala y configura Keycloak según tus necesidades.
+   - Crea un realm y configure un cliente para tu aplicación Spring Boot.
+   - Asegúrate de que Keycloak esté ejecutándose y accesible desde tu aplicación.
+
+2. **Dependencias Maven**:
+   Añade las siguientes dependencias a tu archivo `pom.xml` para integrar Spring Security y Keycloak:
+
+   ```xml
+   <dependency>
+       <groupId>org.springframework.boot</groupId>
+       <artifactId>spring-boot-starter-security</artifactId>
+   </dependency>
+   <dependency>
+       <groupId>org.keycloak</groupId>
+       <artifactId>keycloak-spring-boot-starter</artifactId>
+   </dependency>
+   ```
+
+3. **Configuración de Application.properties**:
+   Configura las propiedades de Keycloak en tu archivo `application.properties`:
+
+   ```properties
+   # Keycloak properties
+   keycloak.auth-server-url=http://localhost:8080/auth
+   keycloak.realm=myrealm
+   keycloak.resource=myclient
+   keycloak.public-client=true
+   ```
+
+### Configuración de Seguridad y Validación de Token
+
+4. **Configuración de Seguridad de Spring Boot**:
+   Crea una clase de configuración para Spring Security y Keycloak:
+
+   ```java
+   // SecurityConfig.java
+
+   package com.example.config;
+
+   import org.keycloak.adapters.springboot.KeycloakSpringBootConfigResolver;
+   import org.keycloak.adapters.springsecurity.KeycloakConfiguration;
+   import org.keycloak.adapters.springsecurity.authentication.KeycloakAuthenticationProvider;
+   import org.keycloak.adapters.springsecurity.config.KeycloakWebSecurityConfigurerAdapter;
+   import org.springframework.beans.factory.annotation.Autowired;
+   import org.springframework.context.annotation.Bean;
+   import org.springframework.context.annotation.Import;
+   import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+   import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+   import org.springframework.security.core.authority.mapping.SimpleAuthorityMapper;
+   import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
+   import org.springframework.security.web.authentication.session.SessionAuthenticationStrategy;
+
+   @KeycloakConfiguration
+   @Import(KeycloakSpringBootConfigResolver.class)
+   public class SecurityConfig extends KeycloakWebSecurityConfigurerAdapter {
+
+       @Autowired
+       public void configureGlobal(AuthenticationManagerBuilder auth) {
+           KeycloakAuthenticationProvider keycloakAuthenticationProvider = keycloakAuthenticationProvider();
+           keycloakAuthenticationProvider.setGrantedAuthoritiesMapper(new SimpleAuthorityMapper());
+           auth.authenticationProvider(keycloakAuthenticationProvider);
+       }
+
+       @Bean
+       @Override
+       protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
+           return new NullAuthenticatedSessionStrategy();
+       }
+
+       @Override
+       protected void configure(HttpSecurity http) throws Exception {
+           super.configure(http);
+           http.authorizeRequests()
+               .antMatchers("/api/items").authenticated() // Secure this endpoint
+               .anyRequest().permitAll();
+       }
+   }
+   ```
+
+   - `KeycloakConfiguration`: Anotación que configura Keycloak en Spring Boot.
+   - `configureGlobal`: Configura el proveedor de autenticación de Keycloak.
+   - `sessionAuthenticationStrategy`: Estrategia de sesión para evitar la creación de sesiones de Spring Security.
+   - `configure`: Configura las reglas de seguridad de HTTP, asegurando que `/api/items` esté autenticado.
+
+### Integración con JWT y Flujo de OpenID Connect
+
+5. **Validación de Token JWT**:
+   - Spring Security con Keycloak se encargará automáticamente de validar el token JWT enviado con la solicitud.
+   - Asegúrate de que tus controladores (`ItemController` en el ejemplo anterior) estén asegurados con las configuraciones de seguridad adecuadas.
+
+6. **Manejo del Flujo de OpenID Connect**:
+   - Keycloak proporciona endpoints estándar para manejar el flujo de OpenID Connect, incluyendo la obtención de tokens de acceso.
+
+### Implementación en el Controlador
+
+En tu controlador `ItemController`, asegúrate de que los métodos estén protegidos adecuadamente. Por ejemplo:
+
+```java
+@RestController
+@RequestMapping("/api/items")
+public class ItemController {
+
+    @GetMapping
+    public ResponseEntity<List<ItemDTO>> getAllItems() {
+        // Implementación para obtener los ítems
+    }
+}
+```
+
+### Consideraciones Finales
+
+- **Pruebas**: Asegúrate de probar la integración con Keycloak para verificar que los tokens JWT se validen correctamente.
+- **Documentación**: Consulta la documentación de Keycloak para detalles específicos sobre la configuración y el flujo de OpenID Connect.
+
+Siguiendo estos pasos, podrás integrar la autenticación y validación de tokens JWT utilizando Keycloak en tu aplicación Spring Boot, cumpliendo con las premisas mencionadas de seguridad y flujo de OpenID Connect. Ajusta la configuración y los detalles según tus necesidades específicas y la arquitectura de tu aplicación.

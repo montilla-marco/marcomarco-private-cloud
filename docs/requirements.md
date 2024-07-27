@@ -12,7 +12,9 @@
 - Linux jq Command: [Installation guide](https://github.com/jqlang/jq/wiki/Installation)
 - Linux yq Command: [Installation guide](https://mikefarah.gitbook.io/yq#install)
 - Kubectl: [Command-line tool](https://kubernetes.io/docs/tasks/tools/)
+- Istioctl: [Istioctl Command-line Tool](https://istio.io/latest/docs/ops/diagnostic-tools/istioctl/)
 - Helm: [Helm CLI](https://helm.sh/docs/intro/install/)
+- Podman [Podman Installation](https://podman.io/docs/installation)
 
 ### On Mac 
 - Brew 

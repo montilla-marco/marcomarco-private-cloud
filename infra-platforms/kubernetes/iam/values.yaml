@@ -4,11 +4,11 @@ auth:
 postgresql:
   enabled: false
 externalDatabase:
-  host: ""
+  host: "postgresql"
   port: 5432
-  user: "antares"
-  database: bitnami_keycloak
-  password: "antares"
+  user: "postgres"
+  password: "gladiator"
+  database: "keycloak"
 extraEnvVars:
   - name: KEYCLOAK_LOG_LEVEL
     value: DEBUG

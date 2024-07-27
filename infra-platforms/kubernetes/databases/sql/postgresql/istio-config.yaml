@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: postgres-tcp-gateway
+  namespace: postgresql-ns
+spec:
+  selector:
+    istio: ingress # use istio default controller istio-ingress
+  servers:
+  - port:
+      number: 5432
+      name: tcp-postgresql
+      protocol: TCP
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: postgres-vs
+  namespace: postgresql-ns
+spec:
+  hosts:
+  - postgresql-ns.svc.cluster.local # name of internal postgresql service
+  gateways:
+  - postgres-tcp-gateway # can omit the namespace if gateway is in same namespace as virtual service.
+  tcp:
+    - match:
+        - port: 5432
+      route:
+        - destination:
+            host: postgresql
+            port:
+              number: 5432
+            subset: postgres-0

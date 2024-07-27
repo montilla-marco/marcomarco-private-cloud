@@ -8,7 +8,7 @@ include('microservices')
 include('sdk')
 
 includeBuild('microservices/authentication')
-includeBuild('microservices/web-basic')
+includeBuild('microservices/ms-hello')
 
 includeBuild('sdk/http')
 includeBuild('sdk/parser')

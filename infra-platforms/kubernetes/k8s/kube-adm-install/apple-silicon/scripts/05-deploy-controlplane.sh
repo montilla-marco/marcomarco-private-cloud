@@ -62,11 +62,12 @@ chmod 600 ~/.kube/config
 #cluster_names=$(kubectl config view -o jsonpath='{.clusters[*].name}')
 #echo -e "${PURPLE}Cluster nanes $cluster_names${NC}"
 
-# Instalar Flannel como complemento de red de pods
-#echo -e "${BLUE}Installing Flannel for pod networking${NC}"
-kubectl apply -f "https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s-1.11.yaml"
+# Instalar weaveworks como complemento de red de pods
+#kubectl apply -f "https://github.com/weaveworks/weave/releases/download/v2.8.1/weave-daemonset-k8s-1.11.yaml"
 
-#kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+# Instalar Flannel como complemento de red de pods
+echo -e "${BLUE}Installing Flannel for pod networking${NC}"
+kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
 
 # Crear el comando de unión y guardarlo en un archivo
 echo -e "${BLUE}Creating join command for worker nodes${NC}"
@@ -84,6 +85,6 @@ for s in $(seq 60 -10 10); do
 done
 
 echo -e "${BLUE}Getting pods status fron kube-system namespace${NC}"
-echo $(kubectl get pods -n kube-system)
+kubectl get pods -n kube-system
 
 echo -e "${GREEN}Kubernetes control plane setup complete!${NC}"

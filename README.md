@@ -10,6 +10,19 @@ to need a machine with a Mac OS (It's my default laptop)
 Litle by litle we will add some update to running this platform using Rancher K3S or Docker Desktop both for windows 
 anc Mac, please feel free to add some additions (Linux)  to it.
 
+
+microservices, automated testing, containers, and continuous integration and delivery (CI/CD).
+
+blue-green deployment, which means they brought up the new deployment (the green deployment) in its own
+cluster and then at some point cut over the traffic from the old cluster (the blue
+deployment) to the new cluster. They had hoped the blue-green approach would
+lower the risk of doing deployments, but instead they experienced more of a “big
+bang” release, which is what they wanted to avoid.
+
+application-networking concerns are not specific to any particular application,
+language, or framework. Retries, timeouts, client-side load balancing, circuit
+breaking, and so on are also not differentiating application features
+
 ## Please refer to the minimum system requirements for each OS and kubernetes way to run
 - What I need to run on it? [Requirements](./docs/requirements.md)
 

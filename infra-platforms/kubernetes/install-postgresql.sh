@@ -16,4 +16,4 @@ for s in $(seq 90 -10 10); do
     sleep 10
 done
 
-#kubectl describe svc -n postgresql16-ns
+#kubectl describe svc -n postgresql-ns

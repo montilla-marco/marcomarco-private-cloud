@@ -14,7 +14,7 @@ spec:
   accessModes:
     - ReadWriteOnce
   local:
-    path: /mnt/k8s-worker-node1/jenkins
+    path: /opt/k8s-worker-node1/jenkins
   nodeAffinity:
     required:
       nodeSelectorTerms:

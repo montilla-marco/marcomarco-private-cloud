@@ -1,20 +1,20 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: postgresql16-pv-volume
+  name: postgresql-pv-volume
   labels:
     type: local
 spec:
   storageClassName: local-storage
   claimRef:
-    name: postgresql16-pvc
-    namespace: postgresql16-ns
+    name: postgresql-pvc
+    namespace: postgresql-ns
   capacity:
     storage: 4Gi
   accessModes:
     - ReadWriteOnce
   local:
-    path: /mnt/k8s-worker-node1/postgresql
+    path: /opt/k8s-worker-node1/postgresql
   nodeAffinity:
     required:
       nodeSelectorTerms:

@@ -3,7 +3,7 @@
 ## Building
 
     $ cd infra-platforms/kubernetes/
-    $ ./install-jenkins-cicd.sh
+    $ ./install-jenkins.sh
 
 The resulting output is going to print in the CLI
 
